@@ -10,7 +10,8 @@ on:
 
 jobs:
   scan-library-and-notify:
-    runs-on: ubuntu-latest
+    # This tells GitHub to run the job on your self-hosted machine
+    runs-on: self-hosted 
 
     steps:
       - name: Checkout repository
@@ -27,27 +28,23 @@ jobs:
       - name: Run the Python script
         env:
           KAVITA_TOKEN: ${{ secrets.KAVITA_TOKEN }}
-          KAVITA_URL: 'http://localhost:5000'
+          KAVITA_URL: 'http://localhost:5000' # Ahora sí, este localhost funcionará
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_TO }}
         run: |
-          # The Python code is passed cleanly to the python interpreter
-          python -c "
+          python - <<EOF
           import requests
           import os
 
-          # Environment variables from GitHub Secrets
           kavita_token = os.getenv('KAVITA_TOKEN')
           kavita_url = os.getenv('KAVITA_URL')
           telegram_token = os.getenv('TELEGRAM_BOT_TOKEN')
           chat_id = os.getenv('TELEGRAM_CHAT_ID')
 
-          # Validate all secrets are set
           if not all([kavita_token, telegram_token, chat_id]):
               print('Error: Missing GitHub secrets. Ensure all required tokens are configured.')
               exit(1)
 
-          # --- Attempt to start the Kavita scan ---
           kavita_success = False
           message_text = ''
           try:
@@ -58,7 +55,6 @@ jobs:
           except requests.exceptions.RequestException as e:
               message_text = f'❌ *Error initiating Kavita scan:*\n\n`{e}`'
 
-          # --- Send the notification to Telegram ---
           try:
               telegram_api_url = f'https://api.telegram.org/bot{telegram_token}/sendMessage'
               payload = {
@@ -71,7 +67,6 @@ jobs:
           except requests.exceptions.RequestException as e:
               print(f'Error sending Telegram notification: {e}')
 
-          # Fail the workflow if the Kavita scan failed
           if not kavita_success:
               exit(1)
-          "
+          EOF
