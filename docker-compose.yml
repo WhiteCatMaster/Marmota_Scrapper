@@ -8,8 +8,8 @@ services:
       - PGID=1000
       - TZ=Etc/UTC
     volumes:
-      - /path/to/kavita/config:/config
-      - /path/to/data:/data #optional
+      - ./kavita/config:/config
+      - ./kavita/data:/home/data #optional
     ports:
       - 5000:5000
     restart: unless-stopped
