@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main # Puedes cambiar 'main' por el nombre de tu rama principal
+      - main
   schedule:
-    - cron: '0 3 * * *' # Cada día a las 3:00 AM
+    - cron: '0 3 * * *'
 
 jobs:
   scan-library-and-notify:
@@ -27,9 +27,9 @@ jobs:
       - name: Run Kavita Scan and Telegram Notification Script
         env:
           KAVITA_TOKEN: ${{ secrets.KAVITA_TOKEN }}
-          KAVITA_URL: 'http://localhost:5000' # Remplaza con la URL de tu servidor
+          KAVITA_URL: 'http://localhost:5000' # Usando localhost:5000 como pediste
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_TO }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           python - <<EOF
           import requests
@@ -38,12 +38,12 @@ jobs:
           # Variables de entorno
           kavita_token = os.getenv('KAVITA_TOKEN')
           kavita_url = os.getenv('KAVITA_URL')
-          telegram_token = os.getenv('TELEGRAM_TOKEN')
-          chat_id = os.getenv('TELEGRAM_TO')
+          telegram_token = os.getenv('TELEGRAM_BOT_TOKEN')
+          chat_id = os.getenv('TELEGRAM_CHAT_ID')
 
           # Validar que todos los secrets estén configurados
           if not all([kavita_token, telegram_token, chat_id]):
-              print("Error: Faltan secrets de GitHub. Asegúrate de que KAVITA_TOKEN, TELEGRAM_TOKEN y TELEGRAM_TO estén configurados.")
+              print("Error: No se han encontrado todos los secrets de GitHub. Asegúrate de que KAVITA_TOKEN, TELEGRAM_BOT_TOKEN y TELEGRAM_CHAT_ID están configurados correctamente.")
               exit(1)
 
           # --- PASO 1: Iniciar el escaneo de Kavita ---
@@ -55,7 +55,7 @@ jobs:
               kavita_success = True
               message_text = "✅ *Escaneo de Kavita iniciado con éxito.*"
           except requests.exceptions.RequestException as e:
-              message_text = f"❌ *Error al iniciar el escaneo de Kavita:*\n`{e}`"
+              message_text = f"❌ *Error al iniciar el escaneo de Kavita:*\n\n`{e}`"
 
           # --- PASO 2: Enviar la notificación a Telegram ---
           try:
@@ -70,6 +70,7 @@ jobs:
           except requests.exceptions.RequestException as e:
               print(f"Error al enviar la notificación a Telegram: {e}")
 
+          # Si el escaneo falló, el workflow fallará.
           if not kavita_success:
               exit(1)
           EOF
