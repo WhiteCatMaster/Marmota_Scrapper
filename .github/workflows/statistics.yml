@@ -27,7 +27,7 @@ jobs:
       - name: Run Kavita Scan and Telegram Notification Script
         env:
           KAVITA_TOKEN: ${{ secrets.KAVITA_TOKEN }}
-          KAVITA_URL: 'http://tu-servidor-kavita:5000' # Remplaza con la URL de tu servidor
+          KAVITA_URL: 'http://localhost:5000' # Remplaza con la URL de tu servidor
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_TO }}
         run: |
@@ -38,12 +38,12 @@ jobs:
           # Variables de entorno
           kavita_token = os.getenv('KAVITA_TOKEN')
           kavita_url = os.getenv('KAVITA_URL')
-          telegram_token = os.getenv('TELEGRAM_BOT_TOKEN')
-          chat_id = os.getenv('TELEGRAM_CHAT_ID')
+          telegram_token = os.getenv('TELEGRAM_TOKEN')
+          chat_id = os.getenv('TELEGRAM_TO')
 
           # Validar que todos los secrets estén configurados
           if not all([kavita_token, telegram_token, chat_id]):
-              print("Error: Faltan secrets de GitHub. Asegúrate de que KAVITA_TOKEN, TELEGRAM_BOT_TOKEN y TELEGRAM_CHAT_ID estén configurados.")
+              print("Error: Faltan secrets de GitHub. Asegúrate de que KAVITA_TOKEN, TELEGRAM_TOKEN y TELEGRAM_TO estén configurados.")
               exit(1)
 
           # --- PASO 1: Iniciar el escaneo de Kavita ---
