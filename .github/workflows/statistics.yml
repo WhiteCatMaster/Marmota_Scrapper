@@ -21,56 +21,57 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: pip install requests
 
-      - name: Run Kavita Scan and Telegram Notification Script
+      - name: Run the Python script
         env:
           KAVITA_TOKEN: ${{ secrets.KAVITA_TOKEN }}
-          KAVITA_URL: 'http://localhost:5000' # Usando localhost:5000
+          KAVITA_URL: 'http://localhost:5000'
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_TO }} # Nombre del secret cambiado a TELEGRAM_TO
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_TO }}
         run: |
-          python - <<EOF
+          # The Python code is passed cleanly to the python interpreter
+          python -c "
           import requests
           import os
 
-          # Variables de entorno
+          # Environment variables from GitHub Secrets
           kavita_token = os.getenv('KAVITA_TOKEN')
           kavita_url = os.getenv('KAVITA_URL')
           telegram_token = os.getenv('TELEGRAM_BOT_TOKEN')
           chat_id = os.getenv('TELEGRAM_CHAT_ID')
 
-          # Validar que todos los secrets estén configurados
+          # Validate all secrets are set
           if not all([kavita_token, telegram_token, chat_id]):
-              print("Error: No se han encontrado todos los secrets de GitHub. Asegúrate de que KAVITA_TOKEN, TELEGRAM_TOKEN y TELEGRAM_TO están configurados correctamente.")
+              print('Error: Missing GitHub secrets. Ensure all required tokens are configured.')
               exit(1)
 
-          # --- PASO 1: Iniciar el escaneo de Kavita ---
+          # --- Attempt to start the Kavita scan ---
           kavita_success = False
-          message_text = ""
+          message_text = ''
           try:
               response = requests.post(f'{kavita_url}/api/library/scan', headers={'Authorization': f'Bearer {kavita_token}'})
               response.raise_for_status()
               kavita_success = True
-              message_text = "✅ *Escaneo de Kavita iniciado con éxito.*"
+              message_text = '✅ *Kavita library scan initiated successfully.*'
           except requests.exceptions.RequestException as e:
-              message_text = f"❌ *Error al iniciar el escaneo de Kavita:*\n\n`{e}`"
+              message_text = f'❌ *Error initiating Kavita scan:*\n\n`{e}`'
 
-          # --- PASO 2: Enviar la notificación a Telegram ---
+          # --- Send the notification to Telegram ---
           try:
-              telegram_api_url = f"https://api.telegram.org/bot{telegram_token}/sendMessage"
+              telegram_api_url = f'https://api.telegram.org/bot{telegram_token}/sendMessage'
               payload = {
                   'chat_id': chat_id,
                   'text': message_text,
                   'parse_mode': 'Markdown'
               }
               requests.post(telegram_api_url, data=payload)
-              print("Notificación de Telegram enviada.")
+              print('Telegram notification sent.')
           except requests.exceptions.RequestException as e:
-              print(f"Error al enviar la notificación a Telegram: {e}")
+              print(f'Error sending Telegram notification: {e}')
 
-          # Si el escaneo falló, el workflow fallará.
+          # Fail the workflow if the Kavita scan failed
           if not kavita_success:
               exit(1)
-          EOF
+          "
